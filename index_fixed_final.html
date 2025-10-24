@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ملف إنجاز مدير المدرسة</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- استيراد خط Tajawal من Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- خط Cairo من Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* خلفية عرض الصورة */
+.image-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.image-popup.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* الصورة المكبرة */
+.image-popup img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 10px;
+  box-shadow: 0 0 25px rgba(255,255,255,0.3);
+  cursor: default;
+}
+
+/* زر الإغلاق */
+.image-popup .close-btn {
+  position: absolute;
+  top: 25px;
+  right: 35px;
+  font-size: 32px;
+  color: #fff;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+.image-popup .close-btn:hover {
+  color: #ff5555;
+}
+
+/* يجعل الصور الصغيرة قابلة للنقر */
+.file-gallery img {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.file-gallery img:hover {
+  transform: scale(1.05);
+}
+</style>
+
+<style>
+/* تطبيق خط Cairo على كامل الموقع */
+body, h1, h2, h3, h4, h5, h6, button, p {
+  font-family: 'Cairo', sans-serif !important;
+}
+
+/* تحسين مظهر العناوين */
+h1, h2 {
+  font-weight: 700 !important;
+}
+
+/* الفقرة أسفل العنوان بلون أفتح */
+.dashboard-header p {
+  color: #888 !important;
+  font-weight: 400 !important;
+}
+</style>
+
+<style>
+/* حل قاسٍ ونهائي: يضمن وضع الأزرار في أقصى اليسار */
+.header {
+  position: relative !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* نضع مجموعة الأزرار بشكل ثابت إلى يسار الهيدر */
+.header .dashboard-actions {
+  position: absolute !important;
+  left: 8px !important;             /* المسافة من الحافة اليسرى — عدِّلها إن أردت */
+  top: 50% !important;              /* يضعها في منتصف الشريط عموديًا */
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  gap: 8px !important;
+  direction: ltr !important;        /* يحافظ على ترتيب الأزرار كما هي */
+  z-index: 9999 !important;         /* يضمن أنها فوق أي عنصر آخر */
+  margin: 0 !important;             /* يلغي أي margin قد يمنع التلاصق */
+  background: transparent !important;
+}
+
+/* نضمن أن العنوان يبقى في أقصى اليمين */
+.header .title {
+  margin: 0 12px 0 12px !important;
+  text-align: right !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+</style>
+
+<!-- ===== رأس الصفحة ===== -->
+<header class="header">
+  <div class="header-content">
+    <div class="title">
+      <h1>
+        <i class="fas fa-graduation-cap"></i> ملف إنجاز مدير المدرسة
+      </h1>
+    </div>
+
+    <div class="dashboard-actions">
+                       <button class="btn btn-pdf" onclick="exportToPDF()">
+                      <i class="fas fa-file-pdf"></i> تصدير PDF
+                    </button>
+      <button class="btn btn-save" onclick="saveCurrentSection()">
+        <i class="fas fa-save"></i> حفظ البيانات
+      </button>
+      <button class="btn btn-edit" onclick="toggleEditMode()">
+        <i class="fas fa-pen"></i> التعديل
+      </button>
+      <button class="btn btn-dashboard" onclick="backToDashboard()">
+        <i class="fas fa-tachometer-alt"></i> لوحة التحكم
+      </button>
+  </div>
+</header>
+<style>
+  
+/* تكبير عنوان ملف إنجاز مدير المدرسة والأيقونة */
+.header .title h1 {
+  font-size: 40px !important; /* حجم الخط */
+  font-weight: bold !important; /* جعله عريض */
+  color: #fff !important; /* يضمن بقاء اللون أبيض */
+  display: flex;
+  align-items: center;
+  gap: 8px; /* مسافة بسيطة بين الأيقونة والنص */
+}
+
+/* تكبير الأيقونة */
+.header .title h1 i {
+  font-size: 50px !important; /* حجم الأيقونة */
+  color: #f4b042 !important; /* لون ذهبي جميل */
+}
+</style>
+<style>
+/* إخفاء زر تصدير PDF */
+.btn-pdf {
+  display: none !important;
+}
+
+/* جعل الأزرار فوق بعض بنفس العرض */
+.dashboard-actions {
+  position: absolute !important;
+  left: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  flex-direction: column !important; /* فوق بعض */
+  gap: 10px !important; /* مسافة بين الأزرار */
+  width: 140px !important; /* عرض موحد للأزرار */
+  direction: ltr !important;
+}
+
+/* توحيد شكل الأزرار */
+.dashboard-actions .btn {
+  width: 100% !important; /* كل الأزرار بنفس العرض */
+  text-align: center !important;
+  font-size: 15px !important;
+  border-radius: 8px !important;
+}
+</style>
+
+
+  <!-- ===== لوحة الإنجاز ===== -->
+<!-- ===== لوحة الإنجاز ===== -->
+<main class="dashboard" id="dashboard">
+
+  <!-- تصميم لوحة التحكم الرئيسية -->
+  <div class="dashboard-header">
+    <h2>
+      <i class="fas fa-tachometer-alt"></i>
+      لوحة التحكم الرئيسية
+    </h2>
+    <p>اضغط على أي أيقونة لعرض البيانات المحفوظة</p>
+  </div>
+
+  <!-- بطاقات لوحة التحكم -->
+  <div class="dashboard-cards">
+
+    <div class="dashboard-card" onclick="openSection(1)">
+      <i class="fas fa-user-tie"></i>
+      <h3>أداء الواجبات الوظيفية</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(2)">
+      <i class="fas fa-users"></i>
+      <h3>التفاعل مع المجتمع المهني</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(3)">
+      <i class="fas fa-user-friends"></i>
+      <h3>التفاعل مع أولياء الأمور</h3>
+    </div>
+    
+    <div class="dashboard-card" onclick="openSection(4)">
+  <i class="fas fa-sync-alt"></i>
+  <h3>مرن وقادر على تنفيذ أعماله في ظل ظروف مختلفة</h3>
+</div>
+
+
+    <div class="dashboard-card" onclick="openSection(5)">
+      <i class="fas fa-hands-helping"></i>
+      <h3>يدعم ويشارك في المبادرات النوعية</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(6)">
+      <i class="fas fa-balance-scale"></i>
+      <h3>يتخذ إجراءات تربوية تحقق الانضباط المدرسي</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(7)">
+      <i class="fas fa-briefcase"></i>
+      <h3>يدير الموارد البشرية بكفاءة</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(8)">
+      <i class="fas fa-calendar-alt"></i>
+      <h3>يعد خطة للتطوير المهني</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(9)">
+      <i class="fas fa-chart-line"></i>
+      <h3>يقدم التغذية الراجعة ويتابع تحقق مؤشرات الأداء</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(10)">
+      <i class="fas fa-chalkboard-teacher"></i>
+      <h3>يدعم تنفيذ برامج التطوير المهني</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(11)">
+      <i class="fas fa-school"></i>
+      <h3>يقيم أداء منسوبي المدرسة</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(12)">
+      <i class="fas fa-tasks"></i>
+      <h3>ينفذ إجراءات لتحسين نتائج التعلم</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(13)">
+      <i class="fas fa-chart-bar"></i>
+      <h3>يسهم في تحسين مستوى أداء المدرسة</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(14)">
+      <i class="fas fa-clipboard-list"></i>
+      <h3>يعد الخطط المدرسية للأزمة</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(15)">
+      <i class="fas fa-tasks"></i>
+      <h3>يتابع تنفيذ الخطط المدرسية بمختلف أنواعها</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(16)">
+      <i class="fas fa-graduation-cap"></i>
+      <h3>يهيئ الفرص والإمكانات الداعمة لمشاركة الطلاب</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(17)">
+      <i class="fas fa-laptop-code"></i>
+      <h3>يوظف المنصات الرقمية وتقنياتها الحديثة في عمليات التعليم والتعلم</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(18)">
+      <i class="fas fa-smile-beam"></i>
+      <h3>يتابع تعزيز السلوك الإيجابي للطلاب</h3>
+    </div>
+
+    <div class="dashboard-card" onclick="openSection(19)">
+      <i class="fas fa-shield-alt"></i>
+      <h3>يهيئ بيئة مدرسية آمنة ومحفزة على التعلم</h3>
+    </div>
+
+  </div>
+</main>
+
+
+  <section id="section-view" style="display:none;">
+  <div id="contentArea" class="file-gallery"></div>
+</section>
+
+
+  <!-- ===== الشريحة البيضاء والرمادية ===== -->
+  <div class="section-footer" style="background:#fff;padding:25px 0;text-align:center;">
+    <button class="btn btn-edit" onclick="toggleEditMode()"><i class="fas fa-pen"></i> وضع التعديل</button>
+    <button class="btn btn-save" onclick="saveCurrentSection()"><i class="fas fa-save"></i> حفظ البيانات</button>
+  </div>
+<!-- ✅ حقل رفع الملفات -->
+<div class="upload-section" id="uploadSection" style="display:none; text-align:center; margin:15px 0;">
+  <input 
+    type="file" 
+    id="fileUpload" 
+    multiple 
+    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*,video/*"
+    style="display:none;"
+  >
+  <button class="btn btn-edit" onclick="document.getElementById('fileUpload').click()">
+    <i class="fas fa-upload"></i> إضافة ملفات أو صور أو فيديو
+  </button>
+</div>
+
+<!-- ✅ منطقة عرض الملفات المرفوعة -->
+<div id="contentArea" class="file-gallery"></div>
+
+  <footer class="footer">
+    <p>© 2024 ملف إنجاز مدير المدرسة - جميع الحقوق محفوظة</p>
+  </footer>
+
+  <script src="index_final_pro_script.js"></script>
+</body>
+<script>
+/* يضيف قواعد CSS قوية تتجاوز أي تعريفات سابقة */
+(function(){
+  const css = `
+  /* فرض flex على الحاوية */
+  .header .header-content {
+    display: flex !important;
+    align-items: center !important;
+    direction: rtl !important;
+    width: 100% !important;
+  }
+
+  /* إجبار الأزرار للانتقال لليسار */
+  .header .header-content .dashboard-actions {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    order: 2 !important;
+    display: flex !important;
+    gap: 8px !important;
+    flex-direction: row-reverse !important;
+  }
+
+  /* التأكد أن العنوان على اليمين */
+  .header .header-content .title {
+    order: 1 !important;
+  }
+
+  /* إزالة أي محاذاة داخلية تمنع التلاصق (اختياري) */
+  .header, .header .header-content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  `;
+  const s = document.createElement('style');
+  s.type = 'text/css';
+  s.appendChild(document.createTextNode(css));
+  document.head.appendChild(s);
+
+  /* كخط دفاع إضافي: إذا كان هناك سكربت أو DOM يحرك العناصر لاحقًا، نعيد تطبيق الأنماط بعد تحميل الصفحة */
+  function forceStyles(){
+    const hc = document.querySelector('.header .header-content');
+    const actions = document.querySelector('.dashboard-actions');
+    const title = document.querySelector('.header .title');
+
+    if (!hc || !actions || !title) return;
+
+    // تأكيد أن العناصر داخل نفس الحاوية
+    if (actions.parentElement !== hc) {
+      hc.appendChild(actions);
+    }
+
+    // ضبط الأنماط مباشرة كنسخة احتياطية
+    actions.style.marginLeft = 'auto';
+    actions.style.marginRight = '0';
+    actions.style.display = 'flex';
+    actions.style.gap = '8px';
+    actions.style.order = '2';
+    actions.style.flexDirection = 'row-reverse';
+
+    title.style.order = '1';
+  }
+
+  window.addEventListener('load', function(){
+    forceStyles();
+    // إعادة تطبيق بعد 600ms و 1500ms للتعامل مع أي سكربتات لاحقة
+    setTimeout(forceStyles, 600);
+    setTimeout(forceStyles, 1500);
+  });
+})();
+</script>
+<script>
+(function(){
+  function placeActions(){
+    var header = document.querySelector('.header');
+    var actions = document.querySelector('.dashboard-actions');
+    if (!header || !actions) return;
+    // إذا لم تكن داخل الهيدر، نضعها بداخله
+    if (actions.parentElement !== header) {
+      header.appendChild(actions);
+    }
+    // تطبيق أنماط مباشرة لضمان التنفيذ
+    Object.assign(actions.style, {
+      position: 'absolute',
+      left: '8px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      display: 'flex',
+      gap: '8px',
+      direction: 'ltr',
+      zIndex: '9999',
+      margin: '0',
+      background: 'transparent'
+    });
+    header.style.position = header.style.position || 'relative';
+  }
+
+  window.addEventListener('load', function(){
+    placeActions();
+    setTimeout(placeActions, 300);
+    setTimeout(placeActions, 1000);
+  });
+})();
+</script>
+<script>
+// إنشاء نافذة العرض بزر الإغلاق
+const popup = document.createElement('div');
+popup.className = 'image-popup';
+popup.innerHTML = '<span class="close-btn">&times;</span><img src="">';
+document.body.appendChild(popup);
+
+const popupImg = popup.querySelector('img');
+const closeBtn = popup.querySelector('.close-btn');
+
+// عند الضغط على أي صورة في معرض الملفات
+document.addEventListener('click', function(e) {
+  if (e.target.tagName === 'IMG' && e.target.closest('.file-gallery')) {
+    popupImg.src = e.target.src;
+    popup.classList.add('active');
+  }
+});
+
+// عند الضغط على زر الإغلاق أو الخلفية
+popup.addEventListener('click', function(e) {
+  if (e.target === popup || e.target === closeBtn) {
+    popup.classList.remove('active');
+  }
+});
+</script>
+
+</html>
